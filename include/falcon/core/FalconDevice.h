@@ -152,14 +152,17 @@ namespace libnifalcon
 		 * - Run firmware IO Loop, return false if fails
 		 * - If falcon is homed and kinematic behavior is set, Run kinematic update, return false if fails
 		 * - If grip behavior is set, run grip update, return false if fails
+		 *   更新一次I/O数据寄存器
 		 *
 		 * @return true on success, false otherwise
 		 */
 		bool runIOLoop(unsigned int exe_flags = (FALCON_LOOP_FIRMWARE | FALCON_LOOP_KINEMATIC | FALCON_LOOP_GRIP));
 
+		// 以下四个函数为模板函数，参数以模板类型传入
 		/**
 		 * Set communications behavior type, and create a new internal object from it.
 		 * Also passes new comm object to firmware behavior, if it exists.
+		 * 通讯方式设置（在该类的构造函数中完成）
 		 *
 		 * Template should be a subclass of FalconComm
 		 */
@@ -169,6 +172,7 @@ namespace libnifalcon
 		/**
 		 * Set firmware behavior type, and create a new internal object from it.
 		 * Also passes communications behavior to firmware, if it exists.
+		 * 固件设置（需要手动配置）
 		 *
 		 * Template should be a subclass of FalconFirmware
 		 */
@@ -177,6 +181,7 @@ namespace libnifalcon
 
 		/**
 		 * Set grip behavior, and create a new internal object from it.
+		 * 按钮工作模式设置（需要手动配置）—— setFalconGrip<FalconGripFourButton>();
 		 *
 		 * Template should be a subclass of FalconGrip
 		 */
@@ -185,6 +190,7 @@ namespace libnifalcon
 
 		/**
 		 * Set communications behavior, and create a new internal object from it.
+		 * 操纵杆动力学设置（需要手动配置）—— setFalconKinematic<FalconKinematicStamper>();
 		 *
 		 * Template should be a subclass of FalconKinematic
 		 */

@@ -23,9 +23,11 @@ FalconSphereTest::FalconSphereTest(std::shared_ptr<libnifalcon::FalconDevice> d)
 
 void FalconSphereTest::runFunction()
 {
+	// I/O数据更新
 	if(!m_falconDevice->runIOLoop())
 		return;
-
+	
+	// 获取位置数据
 	std::array<double, 3> pos = m_falconDevice->getPosition();
 
 	if(m_isInitializing)
