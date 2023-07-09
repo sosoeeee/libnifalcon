@@ -355,8 +355,6 @@ int main(int argc, char* argv[])
 		//Forward Kinematics
 		FK(encoderAngles, pos);
 
-		//cout << pos << endl;	
-
 		/////////////////////////////////////////
 		//Inverse kinematics:
 		Angle angles;
