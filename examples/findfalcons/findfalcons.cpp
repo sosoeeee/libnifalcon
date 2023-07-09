@@ -89,7 +89,7 @@ void runFalconTest()
 
 		if(!dev.open(z))
 		{
-			std::cout << "Cannot open falcon - Error: " << std::endl; // << dev.getErrorCode() << std::endl;
+			std::cout << "Cannot open falcon - Error: " << dev.getErrorCode() << std::endl; // << dev.getErrorCode() << std::endl;
 			return;
 		}
 		std::cout << "Opened falcon" << std::endl;

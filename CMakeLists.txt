@@ -62,6 +62,13 @@ IF(NOT LIBFTD2XX_FOUND AND NOT LIBUSB_1_FOUND)
   MESSAGE(FATAL_ERROR "Either ftd2xx or libusb-1.0 is required to build libnifalcon. Check the README file for info.")
 ENDIF(NOT LIBFTD2XX_FOUND AND NOT LIBUSB_1_FOUND)
 
+#For debugging purposes
+FIND_PACKAGE(log4cxx REQUIRED)
+IF(LOG4CXX_1_FOUND)
+  INCLUDE_DIRECTORIES(${LOG4CXX_1_INCLUDE_DIRS})
+  LIST(APPEND LIBNIFALCON_REQ_LIBS ${LOG4CXX_1_LIBRARIES})
+ENDIF(LOG4CXX_1_FOUND)
+
 ######################################################################################
 # Project specific globals
 ######################################################################################

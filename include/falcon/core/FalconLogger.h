@@ -62,8 +62,10 @@
 #ifndef FALCON_LOGGING
 #define FALCON_LOGGING
 
+#define ENABLE_LOGGING
+
 /* Logging */
-#if ENABLE_LOGGING
+#ifdef ENABLE_LOGGING
 #include <log4cxx/logger.h>
  /*
 #ifndef LOG4CXX_STR

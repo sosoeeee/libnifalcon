@@ -23,7 +23,8 @@
 #include <log4cxx/helpers/exception.h>
 #include <log4cxx/patternlayout.h>
 #include <log4cxx/consoleappender.h>
-static constexpr log4cxx::LogString TTCC_CONVERSION_PATTERN(LOG4CXX_STR("%-5p [%c] - %m%n"));
+// static constexpr log4cxx::LogString TTCC_CONVERSION_PATTERN(LOG4CXX_STR("%-5p [%c] - %m%n"));
+static const log4cxx::LogString TTCC_CONVERSION_PATTERN(LOG4CXX_STR("%-5p [%c] - %m%n"));
 
 /**
  * Statically initialize the log4cxx library.
@@ -72,7 +73,7 @@ namespace libnifalcon
 		}
 
 #ifdef ENABLE_LOGGING
-		m_parser.add_option("--debug_level").help("Level of debug messages to print (FATAL, ERROR, WARN, INFO, DEBUG) (Default: FATAL)"));
+		m_parser.add_option("--debug_level").help("Level of debug messages to print (FATAL, ERROR, WARN, INFO, DEBUG) (Default: FATAL)");
 #endif
 	}
 
@@ -90,7 +91,7 @@ namespace libnifalcon
 		log4cxx::LevelPtr logLevel = log4cxx::Level::toLevel("FATAL");
 
 		if(options.is_set("debug_level"))
-			logLevel = log4cxx::Level::toLevel((string)options.get("debug_level"));
+			logLevel = log4cxx::Level::toLevel((std::string)options.get("debug_level"));
 
 		configureLogging(logPattern, logLevel);
 #endif
