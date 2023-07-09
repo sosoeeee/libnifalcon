@@ -69,6 +69,17 @@ IF(LOG4CXX_1_FOUND)
   LIST(APPEND LIBNIFALCON_REQ_LIBS ${LOG4CXX_1_LIBRARIES})
 ENDIF(LOG4CXX_1_FOUND)
 
+#Add ROS dependencies
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+)
+catkin_package(
+  # INCLUDE_DIRS include
+  # LIBRARIES my_library
+  CATKIN_DEPENDS roscpp
+)
+include_directories(${catkin_INCLUDE_DIRS})
+
 ######################################################################################
 # Project specific globals
 ######################################################################################

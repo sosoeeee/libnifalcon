@@ -13,6 +13,8 @@
 
 #include "controller.h"
 
+#include "ros/ros.h"
+
 using namespace std;
 
 //////////////////////////////////////////////////////////
