@@ -8,13 +8,37 @@
 #include "falcon/core/FalconGeometry.h"
 
 FalconController::FalconController():
-     m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
-     m_displayCalibrationMessage(true),
-     currentPosVec(0,0,0),
-     currentForceVec(0,0,0),
+    m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
+    m_displayCalibrationMessage(true),
+	ctlReady(false),
 	currentPos({0,0,0}),
-	currentForce({0,0,0})
+	lastPos({0,0,0}),
+	currentVel({0,0,0}),
+	centerPos({0,0,0}),
+	errorToCenter({0,0,0}),
+	currentForce({0,0,0}),
+	currectTime(0),
+	lastTime(0)
 {
+	this->stiffness = 1.0f;
+	this->damping = 0.1f;
+}
+
+FalconController::FalconController(float stiffness, float damping):
+	m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
+	m_displayCalibrationMessage(true),
+	ctlReady(false),
+	currentPos({0,0,0}),
+	lastPos({0,0,0}),
+	currentVel({0,0,0}),
+	centerPos({0,0,0}),
+	errorToCenter({0,0,0}),
+	currentForce({0,0,0}),
+	currectTime(0),
+	lastTime(0)
+{
+	this->stiffness = stiffness;
+	this->damping = damping;
 }
 
 FalconController::~FalconController()
@@ -135,12 +159,57 @@ bool FalconController::calibrateDevice()
      return true;
 }
 
+void FalconController::updateState()
+{
+	if (!this->ctlReady)
+	{
+		this->currectTime = std::chrono::system_clock::now();
+		// run the IO loop
+		m_falconDevice->runIOLoop();
+		this->currentPos = m_falconDevice->getPosition()
+	}
+	else
+	{
+		this->lastPos = this->currentPos;
+		this->lastTime = this->currectTime;
+
+		this->currectTime = std::chrono::system_clock::now();
+		// run the IO loop
+		m_falconDevice->runIOLoop();
+		this->currentPos = m_falconDevice->getPosition()
+
+		this->currentVel = (this->currentPos - this->lastPos) / (this->currectTime - this->lastTime);
+	}
+}
+
+void FalconController::computeForce()
+{
+	if (this->ctlReady)
+	{
+		this->errorToCenter = this->centerPos - this->currentPosVec;
+
+		// compute the force
+		this->currentForce = this->errorToCenter * this->stiffness - this->currentVel * this->damping;
+	}
+}
+
 void FalconController::run()
 {
-     m_falconDevice->runIOLoop();
-     currentPos = m_falconDevice->getPosition();
-	currentPosVec[0] = currentPos[0];
-	currentPosVec[1] = currentPos[1];
-	currentPosVec[2] = currentPos[2];
-     std::cout << "Current position: " << currentPosVec << std::endl;
+	while(true)
+	{
+		// update the current position
+		updatePosition();
+		if (this->ctlReady)
+		{
+			// compute the force
+			computeForce();
+			// send the force to the device
+			m_falconDevice->setForce(this->currentForce);
+		}
+
+		// std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		std::cout << "Current position: " << this->currentPos[0] << ", " << this->currentPos[1] << ", " << this->currentPos[2] << std::endl;
+		std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
+		std::cout << "Current force: " << this->currentForce[0] << ", " << this->currentForce[1] << ", " << this->currentForce[2] << std::endl;
+	}
 }

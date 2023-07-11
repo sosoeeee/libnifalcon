@@ -9,13 +9,29 @@ class FalconController
 private:
      std::unique_ptr<libnifalcon::FalconDevice> m_falconDevice;
      bool m_displayCalibrationMessage;
-     gmtl::Vec3d currentPosVec;
+
+     bool ctlReady;
+
      std::array<double, 3> currentPos;
-     gmtl::Vec3d currentForceVec;
+     std::array<double, 3> lastPos;
+     std::array<double, 3> currentVel;
      std::array<double, 3> currentForce;
+
+     std::array<double, 3> centerPos;
+     std::array<double, 3> errorToCenter;
+
+     double currectTime;
+     double lastTime;
+
+     float stiffness;
+     float damping;
+
+     void updateState();
+     void computeForce();
      
 public:
      FalconController();
+     FalconController(float stiffness, float damping);
      ~FalconController();
      bool initialise();
      bool calibrateDevice();
