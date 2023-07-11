@@ -1,8 +1,7 @@
 #ifndef CONTROLLER_H
-#define CONTROLLER_H_H
+#define CONTROLLER_H
 
 #include "falcon/core/FalconDevice.h"
-#include "falcon/gmtl/gmtl.h"
 
 class FalconController
 {
@@ -11,6 +10,7 @@ private:
      bool m_displayCalibrationMessage;
 
      bool ctlReady;
+     // bool sampleReady;
 
      std::array<double, 3> currentPos;
      std::array<double, 3> lastPos;

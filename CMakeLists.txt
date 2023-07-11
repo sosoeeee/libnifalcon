@@ -73,12 +73,13 @@ ENDIF(LOG4CXX_1_FOUND)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
 )
+include_directories(${catkin_INCLUDE_DIRS})
 catkin_package(
   # INCLUDE_DIRS include
   # LIBRARIES my_library
   CATKIN_DEPENDS roscpp
 )
-include_directories(${catkin_INCLUDE_DIRS})
+
 
 ######################################################################################
 # Project specific globals

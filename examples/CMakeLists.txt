@@ -5,25 +5,6 @@
 SET(LIBNIFALCON_EXE_PO_LINK_LIBS ${LIBNIFALCON_EXE_LINK_LIBS} nifalcon_cli_base)
 
 ######################################################################################
-# Build function for my_controller
-######################################################################################
-
-SET(SRCS 
-  my_controller/main.cpp
-  my_controller/controller.cpp
-  )
-
-BUILDSYS_BUILD_EXE(
-  NAME my_controller
-  SOURCES "${SRCS}" 
-  CXX_FLAGS "${DEFINE}" 
-  LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS} ${catkin_LIBRARIES}" 
-  LINK_FLAGS FALSE 
-  DEPENDS nifalcon
-  SHOULD_INSTALL TRUE
-  )
-
-######################################################################################
 # Build function for barrow_mechanics
 ######################################################################################
 
@@ -150,3 +131,23 @@ BUILDSYS_BUILD_EXE(
       SHOULD_INSTALL TRUE
       )
   ENDIF(MOUSE_SRCS)
+
+######################################################################################
+# Build function for my_controller
+######################################################################################
+
+SET(SRCS 
+    my_controller/main.cpp
+    my_controller/controller.cpp
+)
+
+BUILDSYS_BUILD_EXE(
+    NAME my_controller
+    SOURCES "${SRCS}" 
+    CXX_FLAGS "${DEFINE}" 
+    LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS} ${catkin_LIBRARIES}" 
+    # LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS}" 
+    LINK_FLAGS FALSE 
+    DEPENDS nifalcon
+    SHOULD_INSTALL TRUE
+)

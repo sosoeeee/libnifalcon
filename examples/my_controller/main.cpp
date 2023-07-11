@@ -10,10 +10,11 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <csignal>
 
 #include "controller.h"
 
-#include "ros/ros.h"
+// #include "ros/ros.h"
 
 using namespace std;
 
@@ -21,8 +22,17 @@ using namespace std;
 /// Ask libnifalcon to get the Falcon ready for action
 /// nothing clever here, straight from the examples
 
+void sigproc(int i)
+{
+	std::cout << "closing falcon and quitting" << std::endl;
+	exit(0);
+}
+
+
 int main(int argc, char* argv[])
 {
+	signal(SIGINT, sigproc);
+
      FalconController falcon;
 
 	if(!falcon.initialise())
@@ -30,10 +40,7 @@ int main(int argc, char* argv[])
 
 	while (!falcon.calibrateDevice()){}
 
-     while (true)
-     {
-          falcon.run();
-     }
+     falcon.run();
 
 	return 0;
 }

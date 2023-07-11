@@ -1,5 +1,8 @@
 #include "controller.h"
 
+#include <time.h>
+#include <unistd.h>
+
 #include "falcon/firmware/FalconFirmwareNovintSDK.h"
 #include "falcon/util/FalconCLIBase.h"
 #include "falcon/util/FalconFirmwareBinaryNvent.h"
@@ -8,9 +11,10 @@
 #include "falcon/core/FalconGeometry.h"
 
 FalconController::FalconController():
-    m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
-    m_displayCalibrationMessage(true),
+	m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
+	m_displayCalibrationMessage(true),
 	ctlReady(false),
+	// sampleReady(false),
 	currentPos({0,0,0}),
 	lastPos({0,0,0}),
 	currentVel({0,0,0}),
@@ -28,6 +32,7 @@ FalconController::FalconController(float stiffness, float damping):
 	m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
 	m_displayCalibrationMessage(true),
 	ctlReady(false),
+	// sampleReady(false),
 	currentPos({0,0,0}),
 	lastPos({0,0,0}),
 	currentVel({0,0,0}),
@@ -163,42 +168,58 @@ void FalconController::updateState()
 {
 	if (!this->ctlReady)
 	{
-		this->currectTime = std::chrono::system_clock::now();
+		this->currectTime = clock();
 		// run the IO loop
 		m_falconDevice->runIOLoop();
-		this->currentPos = m_falconDevice->getPosition()
+		this->currentPos = m_falconDevice->getPosition();
+		this->ctlReady = true;
 	}
 	else
 	{
 		this->lastPos = this->currentPos;
-		this->lastTime = this->currectTime;
 
-		this->currectTime = std::chrono::system_clock::now();
 		// run the IO loop
 		m_falconDevice->runIOLoop();
-		this->currentPos = m_falconDevice->getPosition()
+		this->currentPos = m_falconDevice->getPosition();
 
-		this->currentVel = (this->currentPos - this->lastPos) / (this->currectTime - this->lastTime);
+		this->lastTime = this->currectTime;
+		this->currectTime = clock();
+
+		double temp = ((double) (this->currectTime - this->lastTime)) / CLOCKS_PER_SEC;
+
+		// compute the velocity
+		this->currentVel[0] = (this->currentPos[0] - this->lastPos[0]) / temp;
+		this->currentVel[1] = (this->currentPos[1] - this->lastPos[1]) / temp;
+		this->currentVel[2] = (this->currentPos[2] - this->lastPos[2]) / temp;
+
+		// std::cout << "Pos error" <<(this->currentPos[0] - this->lastPos[0]) << std::endl;
+		// std::cout << "time error" << temp << std::endl;
+		// std::cout << "Vel error" << this->currentVel[0] << std::endl;
 	}
 }
 
 void FalconController::computeForce()
 {
-	if (this->ctlReady)
-	{
-		this->errorToCenter = this->centerPos - this->currentPosVec;
+	// if (this->ctlReady)
+	// {
+	// 	this->errorToCenter = this->centerPos - this->currentPos;
 
-		// compute the force
-		this->currentForce = this->errorToCenter * this->stiffness - this->currentVel * this->damping;
-	}
+	// 	// compute the force
+	// 	this->currentForce = this->errorToCenter * this->stiffness - this->currentVel * this->damping;
+	// }
 }
 
 void FalconController::run()
 {
+	double maxX = 0.0;
+	double maxY = 0.0;
+	double maxZ = 0.0;
 	while(true)
 	{
 		// update the current position
-		updatePosition();
+
+		updateState();
+
 		if (this->ctlReady)
 		{
 			// compute the force
@@ -207,9 +228,27 @@ void FalconController::run()
 			m_falconDevice->setForce(this->currentForce);
 		}
 
-		// std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		if (abs(this->currentPos[0]) > maxX)
+		{
+			maxX = abs(this->currentPos[0]);
+		}
+		if ((this->currentPos[1]) > maxY)
+		{
+			maxY = abs(this->currentPos[1]);
+		}
+		if (abs(this->currentPos[2]) > maxZ)
+		{
+			maxZ = abs(this->currentPos[2]);
+		}
+
+		// std::cout << "Strange"<<std::endl;
+
+		// std::cout << "Max position: " << maxX << ", " << maxY << ", " << maxZ << std::endl;
+
+		sleep(0.6);
+
 		std::cout << "Current position: " << this->currentPos[0] << ", " << this->currentPos[1] << ", " << this->currentPos[2] << std::endl;
-		std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
-		std::cout << "Current force: " << this->currentForce[0] << ", " << this->currentForce[1] << ", " << this->currentForce[2] << std::endl;
+		// std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
+		// std::cout << "Current force: " << this->currentForce[0] << ", " << this->currentForce[1] << ", " << this->currentForce[2] << std::endl;
 	}
 }
