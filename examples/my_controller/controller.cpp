@@ -48,6 +48,7 @@ FalconController::FalconController(float stiffness, float damping):
 
 FalconController::~FalconController()
 {
+	delete m_falconDevice;
 }
 
 bool FalconController::initialise()
@@ -169,17 +170,16 @@ void FalconController::updateState()
 	if (!this->ctlReady)
 	{
 		this->currectTime = clock();
-		// run the IO loop
-		m_falconDevice->runIOLoop();
+
 		this->currentPos = m_falconDevice->getPosition();
 		this->ctlReady = true;
 	}
 	else
 	{
-		this->lastPos = this->currentPos;
+		this->lastPos[0] = this->currentPos[0];
+		this->lastPos[1] = this->currentPos[1];
+		this->lastPos[2] = this->currentPos[2];
 
-		// run the IO loop
-		m_falconDevice->runIOLoop();
 		this->currentPos = m_falconDevice->getPosition();
 
 		this->lastTime = this->currectTime;
@@ -216,7 +216,7 @@ void FalconController::run()
 	double maxZ = 0.0;
 	while(true)
 	{
-		// update the current position
+		m_falconDevice->runIOLoop();
 
 		updateState();
 
