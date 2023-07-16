@@ -19,11 +19,13 @@ private:
 
      std::array<double, 3> centerPos;
      std::array<double, 3> errorToCenter;
+     std::array<double, 3> errorSum;
 
      struct timespec startT, endT;
 
-     float stiffness;
-     float damping;
+     float stiffness;    // P
+     float damping;      // D
+     float integral;     // I
 
      void updateState();
      void computeForce();

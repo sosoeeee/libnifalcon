@@ -19,28 +19,14 @@ FalconController::FalconController():
 	currentPos({0,0,0}),
 	lastPos({0,0,0}),
 	currentVel({0,0,0}),
-	centerPos({0,0,0}),
+	centerPos({0,0,0.11}),
 	errorToCenter({0,0,0}),
+	errorSum({0,0,0}),
 	currentForce({0,0,0})
 {
-	this->stiffness = 1.0f;
-	this->damping = 0.1f;
-}
-
-FalconController::FalconController(float stiffness, float damping):
-	m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
-	m_displayCalibrationMessage(true),
-	ctlReady(false),
-	sampleReady(false),
-	currentPos({0,0,0}),
-	lastPos({0,0,0}),
-	currentVel({0,0,0}),
-	centerPos({0,0,0}),
-	errorToCenter({0,0,0}),
-	currentForce({0,0,0})
-{
-	this->stiffness = stiffness;
-	this->damping = damping;
+	this->stiffness = 60;
+	this->damping = 10;
+	this->integral = 1;
 }
 
 FalconController::~FalconController()
@@ -167,9 +153,9 @@ void FalconController::updateState()
 	{
 		clock_gettime(CLOCK_MONOTONIC, &this->startT);
 		
-		pthread_mutex_lock(&mutex_);
+		// pthread_mutex_lock(&mutex_);
 		this->currentPos = m_falconDevice->getPosition();
-		pthread_mutex_unlock(&mutex_);
+		// pthread_mutex_unlock(&mutex_);
 
 		this->ctlReady = true;
 	}
@@ -179,9 +165,9 @@ void FalconController::updateState()
 		this->lastPos[1] = this->currentPos[1];
 		this->lastPos[2] = this->currentPos[2];
 
-		pthread_mutex_lock(&mutex_);
+		// pthread_mutex_lock(&mutex_);
 		this->currentPos = m_falconDevice->getPosition();
-		pthread_mutex_unlock(&mutex_);
+		// pthread_mutex_unlock(&mutex_);
 
 		// compute the time
 		clock_gettime(CLOCK_MONOTONIC, &this->endT);
@@ -199,22 +185,44 @@ void FalconController::updateState()
 	}
 }
 
+// PID controller
 void FalconController::computeForce()
 {
-	// if (this->ctlReady)
-	// {
-	// 	this->errorToCenter = this->centerPos - this->currentPos;
+	if (this->ctlReady)
+	{
+		this->errorToCenter[0] = this->centerPos[0] - this->currentPos[0];
+		this->errorToCenter[1] = this->centerPos[1] - this->currentPos[1];
+		this->errorToCenter[2] = this->centerPos[2] - this->currentPos[2];
 
-	// 	// compute the force
-	// 	this->currentForce = this->errorToCenter * this->stiffness - this->currentVel * this->damping;
-	// }
+		this->errorSum[0] += this->errorToCenter[0];
+		this->errorSum[1] += this->errorToCenter[1];
+		this->errorSum[2] += this->errorToCenter[2];
+
+		// limit the error sum
+		if (abs(this->errorSum[0]) > 1)
+		{
+			this->errorSum[0] = 1 * (this->errorSum[0] / abs(this->errorSum[0]));
+		}
+		if (abs(this->errorSum[1]) > 1)
+		{
+			this->errorSum[1] = 1 * (this->errorSum[1] / abs(this->errorSum[1]));
+		}
+		if (abs(this->errorSum[2]) > 1)
+		{
+			this->errorSum[2] = 1 * (this->errorSum[2] / abs(this->errorSum[2]));
+		}
+
+		// printf("errorSum: %f, %f, %f\n", this->errorSum[0], this->errorSum[1], this->errorSum[2]);
+
+		// compute the force
+		this->currentForce[0] = this->errorToCenter[0] * this->stiffness - this->currentVel[0] * this->damping + this->errorSum[0] * this->integral;
+		this->currentForce[1] = this->errorToCenter[1] * this->stiffness - this->currentVel[1] * this->damping + this->errorSum[1] * this->integral;
+		this->currentForce[2] = this->errorToCenter[2] * this->stiffness - this->currentVel[2] * this->damping + this->errorSum[2] * this->integral;
+	}
 }
 
 void FalconController::update()
 {
-	double maxX = 0.0;
-	double maxY = 0.0;
-	double maxZ = 0.0;
 	while(true)
 	{
 		updateState();
@@ -225,32 +233,15 @@ void FalconController::update()
 			computeForce();
 			// send the force to the device
 
-			pthread_mutex_lock(&mutex_);
+			// pthread_mutex_lock(&mutex_);
 			m_falconDevice->setForce(this->currentForce);
-			pthread_mutex_unlock(&mutex_);
+			// pthread_mutex_unlock(&mutex_);
 		}
 
-		if (abs(this->currentPos[0]) > maxX)
-		{
-			maxX = abs(this->currentPos[0]);
-		}
-		if ((this->currentPos[1]) > maxY)
-		{
-			maxY = abs(this->currentPos[1]);
-		}
-		if (abs(this->currentPos[2]) > maxZ)
-		{
-			maxZ = abs(this->currentPos[2]);
-		}
-
-		// std::cout << "Strange"<<std::endl;
-
-		// std::cout << "Max position: " << maxX << ", " << maxY << ", " << maxZ << std::endl;
-
-		usleep(100 * 1000); // 200 ms
+		usleep(5 * 1000); // 5 ms
 
 		// std::cout << "Current position: " << this->currentPos[0] << ", " << this->currentPos[1] << ", " << this->currentPos[2] << std::endl;
-		std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
+		// std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
 		// std::cout << "Current force: " << this->currentForce[0] << ", " << this->currentForce[1] << ", " << this->currentForce[2] << std::endl;
 	}
 }
@@ -259,9 +250,9 @@ void FalconController::run()
 {
 	while (true)
 	{	
-		pthread_mutex_lock(&mutex_);
+		// pthread_mutex_lock(&mutex_);
 		m_falconDevice->runIOLoop();
-		pthread_mutex_unlock(&mutex_);
+		// pthread_mutex_unlock(&mutex_);
 	}
 }
 
