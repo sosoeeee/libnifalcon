@@ -10,19 +10,18 @@
 #include "falcon/grip/FalconGripFourButton.h"
 #include "falcon/core/FalconGeometry.h"
 
+
 FalconController::FalconController():
 	m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
 	m_displayCalibrationMessage(true),
 	ctlReady(false),
-	// sampleReady(false),
+	sampleReady(false),
 	currentPos({0,0,0}),
 	lastPos({0,0,0}),
 	currentVel({0,0,0}),
 	centerPos({0,0,0}),
 	errorToCenter({0,0,0}),
-	currentForce({0,0,0}),
-	currectTime(0),
-	lastTime(0)
+	currentForce({0,0,0})
 {
 	this->stiffness = 1.0f;
 	this->damping = 0.1f;
@@ -32,15 +31,13 @@ FalconController::FalconController(float stiffness, float damping):
 	m_falconDevice(std::unique_ptr<libnifalcon::FalconDevice>(new libnifalcon::FalconDevice)),
 	m_displayCalibrationMessage(true),
 	ctlReady(false),
-	// sampleReady(false),
+	sampleReady(false),
 	currentPos({0,0,0}),
 	lastPos({0,0,0}),
 	currentVel({0,0,0}),
 	centerPos({0,0,0}),
 	errorToCenter({0,0,0}),
-	currentForce({0,0,0}),
-	currectTime(0),
-	lastTime(0)
+	currentForce({0,0,0})
 {
 	this->stiffness = stiffness;
 	this->damping = damping;
@@ -48,7 +45,6 @@ FalconController::FalconController(float stiffness, float damping):
 
 FalconController::~FalconController()
 {
-	delete m_falconDevice;
 }
 
 bool FalconController::initialise()
@@ -169,7 +165,7 @@ void FalconController::updateState()
 {
 	if (!this->ctlReady)
 	{
-		this->currectTime = clock();
+		clock_gettime(CLOCK_MONOTONIC, &this->startT);
 
 		this->currentPos = m_falconDevice->getPosition();
 		this->ctlReady = true;
@@ -182,10 +178,10 @@ void FalconController::updateState()
 
 		this->currentPos = m_falconDevice->getPosition();
 
-		this->lastTime = this->currectTime;
-		this->currectTime = clock();
-
-		double temp = ((double) (this->currectTime - this->lastTime)) / CLOCKS_PER_SEC;
+		// compute the time
+		clock_gettime(CLOCK_MONOTONIC, &this->endT);
+		double temp = (this->endT.tv_sec - this->startT.tv_sec) + (this->endT.tv_nsec - this->startT.tv_nsec) / 1000000000.0;
+		clock_gettime(CLOCK_MONOTONIC, &this->startT);
 
 		// compute the velocity
 		this->currentVel[0] = (this->currentPos[0] - this->lastPos[0]) / temp;
@@ -193,7 +189,7 @@ void FalconController::updateState()
 		this->currentVel[2] = (this->currentPos[2] - this->lastPos[2]) / temp;
 
 		// std::cout << "Pos error" <<(this->currentPos[0] - this->lastPos[0]) << std::endl;
-		// std::cout << "time error" << temp << std::endl;
+		std::cout << "time error" << temp << std::endl;
 		// std::cout << "Vel error" << this->currentVel[0] << std::endl;
 	}
 }
@@ -245,10 +241,10 @@ void FalconController::run()
 
 		// std::cout << "Max position: " << maxX << ", " << maxY << ", " << maxZ << std::endl;
 
-		sleep(0.6);
+		usleep(200 * 1000); // 200 ms
 
-		std::cout << "Current position: " << this->currentPos[0] << ", " << this->currentPos[1] << ", " << this->currentPos[2] << std::endl;
-		// std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
+		// std::cout << "Current position: " << this->currentPos[0] << ", " << this->currentPos[1] << ", " << this->currentPos[2] << std::endl;
+		std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
 		// std::cout << "Current force: " << this->currentForce[0] << ", " << this->currentForce[1] << ", " << this->currentForce[2] << std::endl;
 	}
 }

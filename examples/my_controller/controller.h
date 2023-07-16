@@ -10,7 +10,7 @@ private:
      bool m_displayCalibrationMessage;
 
      bool ctlReady;
-     // bool sampleReady;
+     bool sampleReady;
 
      std::array<double, 3> currentPos;
      std::array<double, 3> lastPos;
@@ -20,8 +20,7 @@ private:
      std::array<double, 3> centerPos;
      std::array<double, 3> errorToCenter;
 
-     double currectTime;
-     double lastTime;
+     struct timespec startT, endT;
 
      float stiffness;
      float damping;
