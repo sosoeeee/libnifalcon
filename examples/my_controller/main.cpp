@@ -15,7 +15,8 @@
 
 #include "controller.h"
 
-// #include "ros/ros.h"
+#include "ros/ros.h"
+#include "std_msgs/String.h"
 
 using namespace std;
 
@@ -59,6 +60,33 @@ int main(int argc, char* argv[])
 	{
 		std::cout << "Created updateThread" << std::endl;
 	}
+
+	ros::init(argc, argv, "falcon_controller");
+	ros::NodeHandle n;
+	ros::Rate loop_rate(100);
+	ros::Publisher controllerPub = n.advertise<std_msgs::String>("controllerSignal", 1); // 1 is the buffer size, means only the latest message is kept
+
+	while (ros::ok())
+	{
+		std_msgs::String msg;
+		std::array<double, 3> pos = falcon.getPosition();
+		std::stringstream ss;
+		
+		if(falcon.getGripState(1))
+		{
+			ss << pos[0] << "," << pos[1] << "," << pos[2];
+		}
+		else
+		{
+			ss << "0,0,0";
+		}
+		msg.data = ss.str();		
+		controllerPub.publish(msg);
+
+		loop_rate.sleep();
+	}
+
+	// if(falcon->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::CENTER_BUTTON)
 
 	pthread_join(runThread, NULL);
 	pthread_join(updateThread, NULL);

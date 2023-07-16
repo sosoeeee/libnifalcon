@@ -221,6 +221,33 @@ void FalconController::computeForce()
 	}
 }
 
+std::array<double, 3> FalconController::getPosition()
+{
+	return this->currentPos;
+}
+
+unsigned int FalconController::getGripState(int index)
+{
+	switch (index)
+	{
+		case 1:
+			return m_falconDevice->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::CENTER_BUTTON;
+			break;
+		
+		case 2:
+			return m_falconDevice->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::FORWARD_BUTTON;
+			break;
+		
+		case 3:
+			return m_falconDevice->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::MINUS_BUTTON;
+			break;
+
+		case 4:
+			return m_falconDevice->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::PLUS_BUTTON;
+			break;
+	}
+}
+
 void FalconController::update()
 {
 	while(true)
