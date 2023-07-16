@@ -166,8 +166,11 @@ void FalconController::updateState()
 	if (!this->ctlReady)
 	{
 		clock_gettime(CLOCK_MONOTONIC, &this->startT);
-
+		
+		pthread_mutex_lock(&mutex_);
 		this->currentPos = m_falconDevice->getPosition();
+		pthread_mutex_unlock(&mutex_);
+
 		this->ctlReady = true;
 	}
 	else
@@ -176,7 +179,9 @@ void FalconController::updateState()
 		this->lastPos[1] = this->currentPos[1];
 		this->lastPos[2] = this->currentPos[2];
 
+		pthread_mutex_lock(&mutex_);
 		this->currentPos = m_falconDevice->getPosition();
+		pthread_mutex_unlock(&mutex_);
 
 		// compute the time
 		clock_gettime(CLOCK_MONOTONIC, &this->endT);
@@ -189,7 +194,7 @@ void FalconController::updateState()
 		this->currentVel[2] = (this->currentPos[2] - this->lastPos[2]) / temp;
 
 		// std::cout << "Pos error" <<(this->currentPos[0] - this->lastPos[0]) << std::endl;
-		std::cout << "time error" << temp << std::endl;
+		// std::cout << "time error" << temp << std::endl;
 		// std::cout << "Vel error" << this->currentVel[0] << std::endl;
 	}
 }
@@ -205,15 +210,13 @@ void FalconController::computeForce()
 	// }
 }
 
-void FalconController::run()
+void FalconController::update()
 {
 	double maxX = 0.0;
 	double maxY = 0.0;
 	double maxZ = 0.0;
 	while(true)
 	{
-		m_falconDevice->runIOLoop();
-
 		updateState();
 
 		if (this->ctlReady)
@@ -221,7 +224,10 @@ void FalconController::run()
 			// compute the force
 			computeForce();
 			// send the force to the device
+
+			pthread_mutex_lock(&mutex_);
 			m_falconDevice->setForce(this->currentForce);
+			pthread_mutex_unlock(&mutex_);
 		}
 
 		if (abs(this->currentPos[0]) > maxX)
@@ -241,10 +247,34 @@ void FalconController::run()
 
 		// std::cout << "Max position: " << maxX << ", " << maxY << ", " << maxZ << std::endl;
 
-		usleep(200 * 1000); // 200 ms
+		usleep(100 * 1000); // 200 ms
 
 		// std::cout << "Current position: " << this->currentPos[0] << ", " << this->currentPos[1] << ", " << this->currentPos[2] << std::endl;
 		std::cout << "Current velocity: " << this->currentVel[0] << ", " << this->currentVel[1] << ", " << this->currentVel[2] << std::endl;
 		// std::cout << "Current force: " << this->currentForce[0] << ", " << this->currentForce[1] << ", " << this->currentForce[2] << std::endl;
 	}
+}
+
+void FalconController::run()
+{
+	while (true)
+	{	
+		pthread_mutex_lock(&mutex_);
+		m_falconDevice->runIOLoop();
+		pthread_mutex_unlock(&mutex_);
+	}
+}
+
+void* FalconController::updateThread(void* arg)
+{
+	FalconController* controller = static_cast<FalconController*>(arg);
+	controller->update();
+	return NULL;
+}
+
+void* FalconController::runThread(void* arg)
+{
+	FalconController* controller = static_cast<FalconController*>(arg);
+	controller->run();
+	return NULL;
 }

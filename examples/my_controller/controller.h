@@ -27,6 +27,8 @@ private:
 
      void updateState();
      void computeForce();
+
+     static pthread_mutex_t mutex_; // mutex for the thread
      
 public:
      FalconController();
@@ -34,7 +36,12 @@ public:
      ~FalconController();
      bool initialise();
      bool calibrateDevice();
-     void run();
+     void update(); // update the state of the controller, and compute the force
+     void run(); // set the force to the falcon
+
+     // thread
+     static void* updateThread(void* arg);
+     static void* runThread(void* arg);
 };
 
 #endif
