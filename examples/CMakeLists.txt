@@ -3,8 +3,8 @@
 ######################################################################################
 
 SET(LIBNIFALCON_EXE_PO_LINK_LIBS ${LIBNIFALCON_EXE_LINK_LIBS} nifalcon_cli_base)
-# SET(LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${LIBNIFALCON_EXE_LINK_LIBS})
-# LIST(APPEND LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${catkin_LIBRARIES})
+SET(LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${LIBNIFALCON_EXE_LINK_LIBS})
+LIST(APPEND LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${catkin_LIBRARIES})
 
 ######################################################################################
 # Build function for barrow_mechanics
@@ -147,11 +147,10 @@ BUILDSYS_BUILD_EXE(
     NAME my_controller
     SOURCES "${SRCS}" 
     CXX_FLAGS "${DEFINE}" 
-    LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS} ${catkin_LIBRARIES}" 
-    # LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS}" 
+    # LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS} ${catkin_LIBRARIES}" 
+    LINK_LIBS "${LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS}" 
     LINK_FLAGS FALSE 
     DEPENDS nifalcon
     SHOULD_INSTALL TRUE
 )
-
-
+  
