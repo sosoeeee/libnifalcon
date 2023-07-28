@@ -226,6 +226,11 @@ std::array<double, 3> FalconController::getPosition()
 	return this->currentPos;
 }
 
+std::array<double, 3> FalconController::getForce()
+{
+	return this->currentForce;
+}
+
 unsigned int FalconController::getGripState(int index)
 {
 	switch (index)

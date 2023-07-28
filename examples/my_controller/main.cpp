@@ -64,21 +64,22 @@ int main(int argc, char* argv[])
 	ros::init(argc, argv, "falcon_controller");
 	ros::NodeHandle n;
 	ros::Rate loop_rate(100);
-	ros::Publisher controllerPub = n.advertise<std_msgs::String>("controllerSignal", 1); // 1 is the buffer size, means only the latest message is kept
+	ros::Publisher controllerPub = n.advertise<std_msgs::String>("stickSignal", 1); // 1 is the buffer size, means only the latest message is kept
 
 	while (ros::ok())
 	{
 		std_msgs::String msg;
 		std::array<double, 3> pos = falcon.getPosition();
+		std::array<double, 3> force = falcon.getForce();
 		std::stringstream ss;
 		
 		if(falcon.getGripState(1))
 		{
-			ss << pos[0] << "," << pos[1] << "," << pos[2];
+			ss << pos[0] << "," << pos[1] << "," << pos[2] << "," << force[0] << "," << force[1] << "," << force[2];
 		}
 		else
 		{
-			ss << "0,0,0";
+			ss << "0,0,0,0,0,0";
 		}
 		msg.data = ss.str();		
 		controllerPub.publish(msg);

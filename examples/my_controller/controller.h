@@ -39,6 +39,7 @@ public:
      bool initialise();
      bool calibrateDevice();
      std::array<double, 3> getPosition();
+     std::array<double, 3> getForce();
      unsigned int getGripState(int index); // 1: center button, 2: forward button, 3: minus button, 4: plus button
      void update(); // update the state of the controller, and compute the force
      void run(); // set the force to the falcon
