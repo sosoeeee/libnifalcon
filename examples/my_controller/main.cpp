@@ -15,8 +15,8 @@
 
 #include "controller.h"
 
-#include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp>
 
 using namespace std;
 
@@ -29,12 +29,49 @@ void sigproc(int i)
 	exit(0); // exit process, which means all threads are cleaned up
 }
 
+class FalconControllerNode : public rclcpp::Node
+{
+public:
+    FalconControllerNode(std::shared_ptr<FalconController> falcon)	
+        : Node("falcon_controller"), loop_rate_(100)
+    {
+        controller_pub_ = this->create_publisher<std_msgs::msg::String>("stickSignal", 1);
+        timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(1000 / loop_rate_), std::bind(&FalconControllerNode::timer_callback, this));
+		falcon_ = falcon;
+    }
+
+private:
+    void timer_callback()
+    {
+        std_msgs::msg::String msg;
+        std::array<double, 3> pos = falcon_->getPosition();
+        std::array<double, 3> force = falcon_->getForce();
+        std::stringstream ss;
+
+        if (falcon_->getGripState(1))
+        {
+            ss << pos[0] << "," << pos[1] << "," << pos[2] << "," << force[0] << "," << force[1] << "," << force[2];
+        }
+        else
+        {
+            ss << "0,0,0,0,0,0";
+        }
+        msg.data = ss.str();
+        controller_pub_->publish(msg);
+    }
+
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr controller_pub_;
+    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Rate loop_rate_;
+	std::shared_ptr<FalconController> falcon_;
+};
 
 int main(int argc, char* argv[])
 {
 	signal(SIGINT, sigproc);
 
-     FalconController falcon;
+    FalconController falcon;
 
 	if(!falcon.initialise())
 		return 0;
@@ -61,31 +98,10 @@ int main(int argc, char* argv[])
 		std::cout << "Created updateThread" << std::endl;
 	}
 
-	ros::init(argc, argv, "falcon_controller");
-	ros::NodeHandle n;
-	ros::Rate loop_rate(100);
-	ros::Publisher controllerPub = n.advertise<std_msgs::String>("stickSignal", 1); // 1 is the buffer size, means only the latest message is kept
-
-	while (ros::ok())
-	{
-		std_msgs::String msg;
-		std::array<double, 3> pos = falcon.getPosition();
-		std::array<double, 3> force = falcon.getForce();
-		std::stringstream ss;
-		
-		if(falcon.getGripState(1))
-		{
-			ss << pos[0] << "," << pos[1] << "," << pos[2] << "," << force[0] << "," << force[1] << "," << force[2];
-		}
-		else
-		{
-			ss << "0,0,0,0,0,0";
-		}
-		msg.data = ss.str();		
-		controllerPub.publish(msg);
-
-		loop_rate.sleep();
-	}
+	rclcpp::init(argc, argv);
+	auto node = std::make_shared<FalconControllerNode>(std::make_shared<FalconController>(falcon));
+	rclcpp::spin(node);
+	rclcpp::shutdown();
 
 	// if(falcon->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::CENTER_BUTTON)
 

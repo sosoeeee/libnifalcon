@@ -4,7 +4,7 @@
 
 SET(LIBNIFALCON_EXE_PO_LINK_LIBS ${LIBNIFALCON_EXE_LINK_LIBS} nifalcon_cli_base)
 SET(LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${LIBNIFALCON_EXE_LINK_LIBS})
-LIST(APPEND LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${catkin_LIBRARIES})
+LIST(APPEND LIBNIFALCON_EXE_LINK_LIBS_WITH_ROS ${rclcpp_LIBRARIES} ${std_msgs_LIBRARIES})
 
 ######################################################################################
 # Build function for barrow_mechanics
