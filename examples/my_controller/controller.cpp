@@ -250,6 +250,10 @@ unsigned int FalconController::getGripState(int index)
 		case 4:
 			return m_falconDevice->getFalconGrip()->getDigitalInputs() & libnifalcon::FalconGripFourButton::PLUS_BUTTON;
 			break;
+		
+		default:
+            // Handle unexpected index values
+            return 0; // or another appropriate default value
 	}
 }
 

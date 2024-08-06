@@ -3,7 +3,8 @@
 ######################################################################################
 
 #Require 2.6 or higher. 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
+# CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10)
 
 INCLUDE( ${CMAKE_CURRENT_SOURCE_DIR}/BuildSysCMakeLib.cmake )
 
@@ -20,6 +21,11 @@ ENDIF(COMMAND cmake_policy)
 #Project declaration
 
 PROJECT(LIBNIFALCON)
+
+# Set C++ standard to C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 INITIALIZE_BUILD()
 
 #Common Options
